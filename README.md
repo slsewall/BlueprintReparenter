@@ -1,4 +1,4 @@
-# 🧩 Blueprint Reparenter (Unreal Engine Plugin)
+# Blueprint Reparenter (Unreal Engine Plugin)
 
 Easily reparent any Blueprint directly from the **Content Browser** with a single right-click.  
 This editor plugin adds a **“Reparent Blueprint…”** option that opens a class picker and safely updates the Blueprint’s parent class.
@@ -9,7 +9,7 @@ Anyway, I crashed out and wrote this.
 
 ---
 
-## ✨ Features
+## Features
 - Adds a **right-click context menu** entry to the Content Browser  
 - Opens a **class picker** to select a new parent class  
 - Works for any Blueprint (C++ or BP-based)  
@@ -18,14 +18,14 @@ Anyway, I crashed out and wrote this.
 
 ---
 
-## 🧰 Requirements
+## Requirements
 - Unreal Engine **5.6 or newer** Not tested on prior to 5.4
 - Works in **Editor builds only**
 - C++ project setup (plugin includes C++ module)
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Option 1 – Per-project
 1. Copy this folder into your project:
@@ -37,7 +37,7 @@ Anyway, I crashed out and wrote this.
 4. Launch Unreal Editor and go to **Edit → Plugins → Project → Blueprint Reparenter**.
 5. Enable the plugin and restart the editor.
 
-### Option 2 – Engine-wide
+### Option 2 – Engine-wide (Totally untested)
 1. Place the folder in your Engine plugins directory:
 
 <Engine>/Engine/Plugins/Editor/BlueprintReparenter/
@@ -46,7 +46,7 @@ Anyway, I crashed out and wrote this.
 
 ---
 
-## 🧭 Usage
+## Usage
 
 1. In the **Content Browser**, locate a Blueprint asset.
 2. **Right-click** it.
@@ -60,7 +60,7 @@ Anyway, I crashed out and wrote this.
 
 ---
 
-## ⚙️ Technical Notes
+## Technical Notes
 
 - Uses Unreal’s module extension system to add context-menu entries.  
 - Hooks into `FContentBrowserModule::GetAllAssetViewContextMenuExtenders()`.  
