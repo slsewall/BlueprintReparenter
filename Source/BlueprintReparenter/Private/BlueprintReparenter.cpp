@@ -49,35 +49,36 @@ TSharedRef<FExtender> FBlueprintReparenterModule::OnExtendContentBrowserMenu(con
 {
 	TSharedRef<FExtender> Extender = MakeShared<FExtender>();
 
-	if (SelectedAssets.Num() == 1 && SelectedAssets[0].GetClass()->IsChildOf(UBlueprint::StaticClass()))
+	for (const FAssetData& SelectedAsset : SelectedAssets)
 	{
-		Extender->AddMenuExtension(
-			"GetAssetActions",
-			EExtensionHook::After,
-			nullptr,
-			FMenuExtensionDelegate::CreateRaw(this, &FBlueprintReparenterModule::AddReparentOption, SelectedAssets[0])
-		);
+		if (!SelectedAsset.GetClass()->IsChildOf(UBlueprint::StaticClass()))
+		{
+			return Extender;
+		}
 	}
+
+	Extender->AddMenuExtension(
+		"GetAssetActions",
+		EExtensionHook::After,
+		nullptr,
+		FMenuExtensionDelegate::CreateRaw(this, &FBlueprintReparenterModule::AddReparentOption, SelectedAssets)
+	);
 
 	return Extender;
 }
 
-void FBlueprintReparenterModule::AddReparentOption(FMenuBuilder& MenuBuilder, FAssetData SelectedAsset)
+void FBlueprintReparenterModule::AddReparentOption(FMenuBuilder& MenuBuilder, TArray<FAssetData> SelectedAssets)
 {
 	MenuBuilder.AddMenuEntry(
-		FText::FromString("Reparent Blueprint…"),
-		FText::FromString("Change this Blueprint’s parent class."),
+		SelectedAssets.Num() > 1 ? FText::FromString("Reparent Blueprints...") : FText::FromString("Reparent Blueprint..."),
+		SelectedAssets.Num() > 1 ? FText::FromString("Change these Blueprints parent classes.") : FText::FromString("Change this Blueprint's parent class."),
 		FSlateIcon(),
-		FUIAction(FExecuteAction::CreateRaw(this, &FBlueprintReparenterModule::OnReparentBlueprint, SelectedAsset))
+		FUIAction(FExecuteAction::CreateRaw(this, &FBlueprintReparenterModule::OnReparentBlueprints, SelectedAssets))
 	);
 }
 
-void FBlueprintReparenterModule::OnReparentBlueprint(FAssetData BlueprintAsset)
+void FBlueprintReparenterModule::OnReparentBlueprints(TArray<FAssetData> BlueprintAssets)
 {
-	UBlueprint* BP = Cast<UBlueprint>(BlueprintAsset.GetAsset());
-	if (!BP)
-		return;
-
 	// Open a class picker window
 	FClassViewerInitializationOptions Options;
 	Options.Mode = EClassViewerMode::ClassPicker;
@@ -98,13 +99,19 @@ void FBlueprintReparenterModule::OnReparentBlueprint(FAssetData BlueprintAsset)
 		[
 			ClassViewerModule.CreateClassViewer(
 				Options,
-				FOnClassPicked::CreateLambda([this, PickerWindow, BP](UClass* NewParentClass)
+				FOnClassPicked::CreateLambda([this, PickerWindow, BlueprintAssets](UClass* NewParentClass)
+				{
+					if (PickerWindow.IsValid())
+						PickerWindow->RequestDestroyWindow();
+
+					for (const FAssetData& BlueprintAsset : BlueprintAssets)
 					{
-						if (PickerWindow.IsValid())
-							PickerWindow->RequestDestroyWindow();
+						UBlueprint* BP = Cast<UBlueprint>(BlueprintAsset.GetAsset());
+						if (!BP)
+							continue;
 
 						if (!NewParentClass || BP->ParentClass == NewParentClass)
-							return;
+							continue;
 
 						// 🔧 Safely reparent Blueprint
 						BP->ParentClass = NewParentClass;
@@ -116,9 +123,8 @@ void FBlueprintReparenterModule::OnReparentBlueprint(FAssetData BlueprintAsset)
 						// Notify the asset registry & editor
 						FAssetRegistryModule::AssetCreated(BP);
 						BP->PostEditChange();
-
-
-					})
+					}
+				})
 			)
 		];
 
